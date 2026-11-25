@@ -1,0 +1,266 @@
+/* Therm display styles.
+   Sized for an 800x480 DSI touchscreen but laid out in relative units so it
+   also works in a desktop browser while developing, and on other panels.
+   No web fonts: nothing to download, nothing to block first paint. */
+
+:root {
+  --bg: #0b0d10;
+  --panel: #151a21;
+  --panel-edge: #212834;
+  --text: #f3f5f8;
+  --text-dim: #8b97a8;
+  --text-faint: #5b6675;
+
+  --ok: #ff9f43;        /* warm amber: the normal, cooking-along colour */
+  --fresh: #34d399;     /* connection healthy */
+  --stale: #fbbf24;     /* data older than expected */
+  --idle: #64748b;      /* no probe / nothing to report */
+  --alarm: #f87171;     /* at or past an alarm threshold */
+
+  --bar-h: 46px;
+  --gap: 6px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;              /* a fixed display never scrolls */
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: default;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  padding: var(--gap);
+  gap: var(--gap);
+}
+
+/* ---------- status bar ---------- */
+
+.bar {
+  flex: 0 0 var(--bar-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 10px;
+}
+
+.bar-left, .bar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--idle);
+  flex: 0 0 auto;
+  transition: background-color 240ms ease;
+}
+
+.conn-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meta {
+  font-size: 13px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.clock {
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* Connection state drives the dot colour and the label tone. */
+.app[data-connection="ok"]         .dot { background: var(--fresh); }
+.app[data-connection="stale"]      .dot { background: var(--stale); }
+.app[data-connection="error"]      .dot { background: var(--alarm); }
+.app[data-connection="auth_error"] .dot { background: var(--alarm); }
+.app[data-connection="starting"]   .dot { background: var(--idle); }
+
+.app[data-connection="error"] .conn-text,
+.app[data-connection="auth_error"] .conn-text { color: var(--alarm); }
+.app[data-connection="stale"] .conn-text { color: var(--stale); }
+
+/* ---------- panels ---------- */
+
+.panels {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  min-height: 0;
+}
+
+.panel {
+  flex: 1 1 0;
+  min-height: 0;
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 6px 14px 5px;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* A thin colour-coded edge: readable at a glance from across the room. */
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--idle);
+  transition: background-color 240ms ease;
+}
+.panel[data-state="ok"]::before      { background: var(--ok); }
+.panel[data-state="stale"]::before   { background: var(--stale); }
+.panel[data-state="no_probe"]::before,
+.panel[data-state="missing"]::before,
+.panel[data-state="unknown"]::before { background: var(--idle); }
+.panel[data-alarming="true"]::before { background: var(--alarm); }
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.panel-name {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.panel-badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.panel[data-alarming="true"] .panel-badge { color: var(--alarm); }
+
+/* The number itself. Scales with viewport height so it fills whatever
+   panel it lands in, and uses tabular figures so it does not jitter as
+   digits change. */
+.panel-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.value { font-size: min(17vh, 15vw); }
+
+.degree {
+  font-size: min(8vh, 7vw);
+  align-self: flex-start;
+  margin-top: 0.4em;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+/* States with no trustworthy number: show why, never a digit. */
+.panel[data-state="no_probe"] .value,
+.panel[data-state="missing"]  .value,
+.panel[data-state="unknown"]  .value {
+  font-size: min(5.5vh, 4.5vw);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-faint);
+  text-align: center;
+  padding: 0 10px;
+}
+.panel[data-state="no_probe"] .degree,
+.panel[data-state="missing"]  .degree,
+.panel[data-state="unknown"]  .degree { display: none; }
+
+.panel[data-state="stale"] .value { color: var(--stale); }
+.panel[data-alarming="true"] .value { color: var(--alarm); }
+
+.panel-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.panel-updated { overflow: hidden; text-overflow: ellipsis; }
+.panel-meta { flex: 0 0 auto; }
+
+/* ---------- focused (tapped) panel ---------- */
+
+/* Tapping a panel gives it the whole screen. Tapping again restores. */
+.panels[data-focused] .panel { display: none; }
+.panels[data-focused] .panel.is-focused { display: grid; flex: 1 1 auto; }
+.panels[data-focused] .panel.is-focused .value { font-size: min(44vh, 34vw); }
+.panels[data-focused] .panel.is-focused .degree { font-size: min(18vh, 14vw); }
+.panels[data-focused] .panel.is-focused .panel-name { font-size: 20px; }
+.panels[data-focused] .panel.is-focused .panel-foot { font-size: 16px; }
+
+/* ---------- error banner ---------- */
+
+.banner {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  background: #2a1416;
+  border: 1px solid #512226;
+  border-radius: 10px;
+  color: #ffc9c9;
+  font-size: 13px;
+  line-height: 1.35;
+  max-height: 22vh;
+  overflow: hidden;
+}
+.banner[hidden] { display: none; }
+
+/* Respect a user's reduced-motion preference. */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

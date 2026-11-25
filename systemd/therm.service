@@ -1,0 +1,38 @@
+# The data service: polls ThermoWorks and serves the display on localhost.
+# Install to /etc/systemd/system/therm.service
+[Unit]
+Description=Therm temperature service
+Documentation=https://github.com/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=chad
+Group=chad
+WorkingDirectory=/home/chad/therm
+ExecStart=/usr/bin/python3 -m therm --config /home/chad/therm/config.toml
+Restart=always
+RestartSec=5
+
+# The display is useless without this, but a bad API key is not fixed by
+# restarting, so do not spin forever: give up after repeated rapid failures.
+StartLimitIntervalSec=300
+StartLimitBurst=10
+
+# The config file holds an API key; keep it out of the journal and limit what
+# this process can touch.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/chad/therm
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,50 @@
+# The display: a minimal Wayland compositor (cage) running Chromium fullscreen
+# against the local therm service. No desktop environment is involved, which
+# matters on a 1GB Pi 3.
+# Install to /etc/systemd/system/therm-kiosk.service
+[Unit]
+Description=Therm kiosk display
+After=therm.service systemd-user-sessions.service
+Wants=therm.service
+
+[Service]
+Type=simple
+User=chad
+Group=chad
+# Needed to drive the display and read the touchscreen directly.
+SupplementaryGroups=video render input tty seat
+
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=WLR_LIBINPUT_NO_DEVICES=1
+Environment=HOME=/home/chad
+
+# Wait for the therm service to answer before opening the browser, so the
+# first paint is the real display rather than a connection error.
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 60); do curl -sf http://127.0.0.1:8000/healthz >/dev/null && exit 0; sleep 1; done; exit 0'
+
+ExecStart=/usr/bin/cage -s -- /usr/bin/chromium \
+    --kiosk \
+    --app=http://127.0.0.1:8000/ \
+    --window-size=800,480 \
+    --window-position=0,0 \
+    --noerrdialogs \
+    --disable-infobars \
+    --disable-session-crashed-bubble \
+    --disable-features=TranslateUI,Translate \
+    --disable-pinch \
+    --overscroll-history-navigation=0 \
+    --no-first-run \
+    --check-for-update-interval=31536000 \
+    --password-store=basic \
+    --user-data-dir=/home/chad/.config/therm-kiosk
+
+Restart=always
+RestartSec=5
+
+TTYPath=/dev/tty1
+StandardInput=tty-force
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

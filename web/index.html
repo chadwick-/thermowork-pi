@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Therm</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app" class="app" data-connection="starting">
+
+    <header class="bar">
+      <div class="bar-left">
+        <span id="conn-dot" class="dot" aria-hidden="true"></span>
+        <span id="conn-text" class="conn-text">Connecting…</span>
+      </div>
+      <div class="bar-right">
+        <span id="data-age" class="meta"></span>
+        <span id="clock" class="clock">--:--</span>
+      </div>
+    </header>
+
+    <main id="panels" class="panels" aria-live="polite">
+      <!-- Panels are rendered here from /api/state -->
+    </main>
+
+    <div id="banner" class="banner" hidden>
+      <span id="banner-text"></span>
+    </div>
+
+  </div>
+
+  <template id="panel-template">
+    <section class="panel" data-state="unknown">
+      <div class="panel-head">
+        <span class="panel-name"></span>
+        <span class="panel-badge"></span>
+      </div>
+      <div class="panel-value">
+        <span class="value">--</span><span class="degree">°</span>
+      </div>
+      <div class="panel-foot">
+        <span class="panel-updated"></span>
+        <span class="panel-meta"></span>
+      </div>
+    </section>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>

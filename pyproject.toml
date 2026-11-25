@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "therm"
+version = "1.0.0"
+description = "A ThermoWorks Cloud temperature display for a Raspberry Pi"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+keywords = ["thermoworks", "rfx", "raspberry-pi", "thermometer", "bbq"]
+
+# No runtime dependencies: standard library only, so there is nothing to
+# install on the Pi beyond Python itself.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+therm = "therm.__main__:main"
+
+[tool.setuptools]
+packages = ["therm"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,75 @@
+# Therm configuration.
+#
+# Copy this file to config.toml and add your API key:
+#   cp config.example.toml config.toml
+#
+# Then run `python3 -m therm --check` to list the devices and channels on your
+# account, and edit the [[panel]] sections below to match.
+
+# Create a key in the ThermoWorks Cloud web app:
+#   Account Settings -> Integrations -> create API key
+# The full key is shown only once, so copy it immediately.
+#
+# You can leave this blank and set the THERM_API_KEY environment variable
+# instead, if you would rather the key never touch disk.
+api_key = "twk_replace_me"
+
+
+[server]
+# Localhost only by default: nothing is exposed to your network, and the API
+# key stays in this process. Set to "0.0.0.0" to view from another device.
+host = "127.0.0.1"
+port = 8000
+
+
+[polling]
+# How often to ask ThermoWorks for new data. The API caches responses for 15
+# seconds and the devices themselves report about once a minute, so going
+# below 60 gains nothing and just burns your rate limit (free tier: 4/min,
+# 3000/day). The minimum accepted is 30.
+interval_seconds = 60
+
+# A reading older than this is shown in amber and labelled stale. RFX Meat
+# probes transmit when the temperature changes rather than on a timer, so an
+# idle probe can legitimately go several minutes between readings. Setting
+# this too low makes a resting probe flap between fresh and stale.
+stale_after_seconds = 600
+
+
+[display]
+units = "F"                   # "F" or "C"
+timezone = "America/Chicago"  # IANA name; used for the on-screen clock
+title = "Therm"
+
+
+# ---------------------------------------------------------------------------
+# One [[panel]] per temperature shown on screen, top to bottom.
+#
+#   device  - the device label exactly as `--check` prints it (case-insensitive).
+#             A serial number or device id also works.
+#   channel - a channel number, or one of:
+#               "min"  lowest healthy channel  (see note below)
+#               "max"  highest healthy channel
+#               "avg"  mean of all healthy channels
+#
+# Note on RFX Meat probes: these have several sensors along the probe's length.
+# The deepest sensor reads coolest when the probe is in meat, so "min" tracks
+# the centre of the cut, which is the number that decides doneness. "max" is
+# closer to the surface. Channels with no probe or a fault are excluded from
+# all three, so a bad sensor cannot skew the figure.
+# ---------------------------------------------------------------------------
+
+[[panel]]
+name = "Ambient"
+device = "RFX GATEWAY"
+channel = 1               # the gateway's wired probe port
+
+[[panel]]
+name = "Meat 1"
+device = "RFX MEAT 1"
+channel = "min"
+
+[[panel]]
+name = "Meat 2"
+device = "RFX MEAT 2"
+channel = "min"
