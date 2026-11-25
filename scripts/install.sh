@@ -47,6 +47,9 @@ fi
 say "Installing display packages"
 MISSING=()
 command -v cage     >/dev/null || MISSING+=(cage)
+# seatd brokers DRM/VT access for the compositor. Without it cage cannot open
+# a virtual terminal from a systemd service and exits immediately.
+dpkg -s seatd >/dev/null 2>&1 || MISSING+=(seatd)
 command -v chromium >/dev/null || command -v chromium-browser >/dev/null || MISSING+=(chromium)
 command -v curl     >/dev/null || MISSING+=(curl)
 if [ ${#MISSING[@]} -gt 0 ]; then
@@ -60,6 +63,28 @@ fi
 CHROMIUM_BIN="$(command -v chromium || command -v chromium-browser)"
 echo "Using browser: $CHROMIUM_BIN"
 
+say "Enabling seatd"
+sudo systemctl enable --now seatd
+# On Raspberry Pi OS the seatd socket is owned by root:video, so membership of
+# 'video' is what grants access. Make sure the user has it.
+if ! id -nG "$RUN_USER" | tr ' ' '\n' | grep -qx video; then
+    echo "Adding $RUN_USER to the video group"
+    sudo usermod -aG video "$RUN_USER"
+    warn "$RUN_USER was added to 'video'. A reboot may be needed for the kiosk to start."
+fi
+systemctl is-active --quiet seatd && echo "seatd is running" || warn "seatd is not running; the kiosk will not start."
+
+# systemd refuses to start a unit whose SupplementaryGroups names a group that
+# does not exist, and which groups are present varies between images. Keep only
+# the ones this system actually has.
+WANTED_GROUPS="video render input tty seat"
+KIOSK_GROUPS=""
+for group in $WANTED_GROUPS; do
+    getent group "$group" >/dev/null && KIOSK_GROUPS="$KIOSK_GROUPS $group"
+done
+KIOSK_GROUPS="$(echo "$KIOSK_GROUPS" | sed 's/^ *//')"
+echo "Display groups available: $KIOSK_GROUPS"
+
 say "Installing systemd units"
 for unit in therm.service therm-kiosk.service; do
     sed -e "s|^User=.*|User=$RUN_USER|" \
@@ -68,6 +93,7 @@ for unit in therm.service therm-kiosk.service; do
         -e "s|/home/chad/\.config|$RUN_HOME/.config|g" \
         -e "s|Environment=HOME=.*|Environment=HOME=$RUN_HOME|" \
         -e "s|/run/user/1000|/run/user/$RUN_UID|g" \
+        -e "s|^SupplementaryGroups=.*|SupplementaryGroups=$KIOSK_GROUPS|" \
         -e "s|/usr/bin/chromium |$CHROMIUM_BIN |" \
         "$PROJECT_DIR/systemd/$unit" | sudo tee "/etc/systemd/system/$unit" >/dev/null
     echo "  installed /etc/systemd/system/$unit"

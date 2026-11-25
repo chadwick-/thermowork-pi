@@ -305,13 +305,14 @@ class ApiClient:
                 detail = str(error.get("message") or "")
         except (json.JSONDecodeError, ValueError, OSError):
             pass
+        # The server's message usually ends in a full stop of its own.
+        detail = detail.strip().rstrip(".")
         suffix = f": {detail}" if detail else ""
 
         if exc.code in (401, 403) or code in ("invalid_api_key", "expired_api_key", "insufficient_scope"):
-            raise AuthError(
-                f"ThermoWorks rejected the API key ({code or exc.code}){suffix}. "
-                "Check it, or create a new one under Account Settings -> Integrations."
-            )
+            # Says only what happened. Callers add the instructions that suit
+            # their medium, so the advice is not printed twice.
+            raise AuthError(f"ThermoWorks rejected the API key ({code or exc.code}){suffix}.")
         if exc.code == 429 or code == "rate_limited":
             retry_after = None
             raw_retry = exc.headers.get("Retry-After") if exc.headers else None

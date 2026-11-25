@@ -14,7 +14,7 @@ import sys
 import threading
 from pathlib import Path
 
-from .api import ApiClient, ThermoworksError
+from .api import ApiClient, AuthError, ThermoworksError
 from .config import Config, ConfigError, load
 from .poller import Poller
 from .server import make_server
@@ -44,6 +44,14 @@ def _print_devices(config: Config) -> int:
         print()
 
         snapshot = client.get_devices()
+    except AuthError as exc:
+        print(f"FAILED: {exc}", file=sys.stderr)
+        print(
+            "\nCreate a key in the ThermoWorks Cloud web app under\n"
+            "Account Settings -> Integrations, then put it in your config.",
+            file=sys.stderr,
+        )
+        return 1
     except ThermoworksError as exc:
         print(f"FAILED: {exc}", file=sys.stderr)
         return 1

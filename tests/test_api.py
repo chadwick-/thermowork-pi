@@ -164,7 +164,29 @@ def test_http_401_403_is_an_auth_error(code):
     error = _FakeHTTPError(code, {"error": {"code": "invalid_api_key", "message": "bad key"}})
     with pytest.raises(AuthError) as excinfo:
         _client()._raise_for_http_error(error, None)
-    assert "Integrations" in str(excinfo.value)
+    message = str(excinfo.value)
+    assert "invalid_api_key" in message
+    assert "bad key" in message
+
+
+def test_auth_error_does_not_duplicate_the_servers_full_stop():
+    """The UI appends its own instructions, so a trailing '.' from the API
+    used to produce '...required.. Check it'."""
+    error = _FakeHTTPError(
+        401, {"error": {"code": "invalid_api_key", "message": "A valid API key is required."}}
+    )
+    with pytest.raises(AuthError) as excinfo:
+        _client()._raise_for_http_error(error, None)
+    assert ".." not in str(excinfo.value)
+
+
+def test_auth_error_leaves_instructions_to_the_caller():
+    """Both the CLI and the web UI add advice suited to their medium; the
+    exception carrying it too printed it twice on screen."""
+    error = _FakeHTTPError(401, {"error": {"code": "invalid_api_key", "message": "bad key"}})
+    with pytest.raises(AuthError) as excinfo:
+        _client()._raise_for_http_error(error, None)
+    assert "Integrations" not in str(excinfo.value)
 
 
 def test_expired_key_code_is_an_auth_error_even_on_a_200_ish_status():

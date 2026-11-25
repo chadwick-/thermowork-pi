@@ -1,25 +1,41 @@
 # The display: a minimal Wayland compositor (cage) running Chromium fullscreen
 # against the local therm service. No desktop environment is involved, which
 # matters on a 1GB Pi 3.
-# Install to /etc/systemd/system/therm-kiosk.service
+#
+# Install to /etc/systemd/system/therm-kiosk.service (scripts/install.sh does
+# this, substituting the user and paths for your system).
 [Unit]
 Description=Therm kiosk display
-After=therm.service systemd-user-sessions.service
+# seatd brokers access to the DRM device and the virtual terminal. Without it,
+# wlroots cannot open a VT from a non-login session and cage fails with
+# "Failed to start a DRM session".
+After=therm.service seatd.service systemd-user-sessions.service
 Wants=therm.service
+Requires=seatd.service
 
 [Service]
 Type=simple
 User=chad
 Group=chad
-# Needed to drive the display and read the touchscreen directly.
-SupplementaryGroups=video render input tty seat
+# Needed to drive the display and read the touchscreen directly. On Raspberry
+# Pi OS, seatd's socket is owned by root:video, so 'video' is what grants
+# access to it. 'seat' is not listed because Debian's seatd package does not
+# create that group, and systemd refuses to start a unit naming a group that
+# does not exist.
+SupplementaryGroups=video render input tty
 
+# Use the seatd backend explicitly. libseat would otherwise try logind first,
+# find no active session for this service, and fall back to its built-in
+# backend, which needs root to open /dev/tty0.
+Environment=LIBSEAT_BACKEND=seatd
 Environment=XDG_RUNTIME_DIR=/run/user/1000
-Environment=WLR_LIBINPUT_NO_DEVICES=1
 Environment=HOME=/home/chad
+# This display is the only output; skip probing for others.
+Environment=WLR_DRM_DEVICES=/dev/dri/card0
 
 # Wait for the therm service to answer before opening the browser, so the
-# first paint is the real display rather than a connection error.
+# first paint is the real display rather than a connection error. Gives up
+# after 60s and starts anyway, since the page reports its own errors.
 ExecStartPre=/bin/sh -c 'for i in $(seq 1 60); do curl -sf http://127.0.0.1:8000/healthz >/dev/null && exit 0; sleep 1; done; exit 0'
 
 ExecStart=/usr/bin/cage -s -- /usr/bin/chromium \
@@ -34,6 +50,7 @@ ExecStart=/usr/bin/cage -s -- /usr/bin/chromium \
     --disable-pinch \
     --overscroll-history-navigation=0 \
     --no-first-run \
+    --fast-start \
     --check-for-update-interval=31536000 \
     --password-store=basic \
     --user-data-dir=/home/chad/.config/therm-kiosk
@@ -41,8 +58,6 @@ ExecStart=/usr/bin/cage -s -- /usr/bin/chromium \
 Restart=always
 RestartSec=5
 
-TTYPath=/dev/tty1
-StandardInput=tty-force
 StandardOutput=journal
 StandardError=journal
 
