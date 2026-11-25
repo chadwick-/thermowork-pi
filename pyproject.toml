@@ -15,6 +15,11 @@ keywords = ["thermoworks", "rfx", "raspberry-pi", "thermometer", "bbq"]
 # install on the Pi beyond Python itself.
 dependencies = []
 
+[project.urls]
+Homepage = "https://github.com/chadwick-/thermowork-pi"
+Repository = "https://github.com/chadwick-/thermowork-pi"
+Issues = "https://github.com/chadwick-/thermowork-pi/issues"
+
 [project.optional-dependencies]
 dev = ["pytest>=7"]
 

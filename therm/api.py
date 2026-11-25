@@ -24,7 +24,7 @@ from typing import Any, Iterator
 _LOG = logging.getLogger(__name__)
 
 DEFAULT_BASE_URL = "https://api.cloud.thermoworks.com"
-USER_AGENT = "therm/1.0 (+https://github.com/)"
+USER_AGENT = "therm/1.0 (+https://github.com/chadwick-/thermowork-pi)"
 
 
 class ThermoworksError(Exception):

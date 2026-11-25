@@ -2,7 +2,7 @@
 # Install to /etc/systemd/system/therm.service
 [Unit]
 Description=Therm temperature service
-Documentation=https://github.com/
+Documentation=https://github.com/chadwick-/thermowork-pi
 After=network-online.target
 Wants=network-online.target
 

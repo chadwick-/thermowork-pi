@@ -1,5 +1,9 @@
 # Therm
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![Dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen.svg)](pyproject.toml)
+
 A dedicated temperature display for [ThermoWorks Cloud](https://cloud.thermoworks.com)
 probes, built for a Raspberry Pi with a small touchscreen.
 
@@ -64,7 +68,7 @@ You can scope a key to specific devices.
 ## Install on a Raspberry Pi
 
 ```bash
-git clone https://github.com/YOURNAME/therm.git ~/therm
+git clone https://github.com/chadwick-/thermowork-pi.git ~/therm
 cd ~/therm
 cp config.example.toml config.toml
 nano config.toml          # paste your API key
