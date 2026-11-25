@@ -101,9 +101,11 @@ function updatePanel(node, panel) {
   }
 
   // Badge: the most useful single word about this panel right now.
+  // Staleness outranks an alarm: the server clears the alarm flag on a stale
+  // reading, and the badge should say which fact matters most right now.
   let badge = "";
-  if (panel.alarming) badge = "ALARM";
-  else if (panel.state === "stale") badge = "STALE";
+  if (panel.state === "stale") badge = "STALE";
+  else if (panel.alarming) badge = "ALARM";
   else if (panel.channelCount > 1) badge = `${panel.channelCount} sensors`;
   setText(node.querySelector(".panel-badge"), badge);
 

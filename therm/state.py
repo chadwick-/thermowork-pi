@@ -203,6 +203,10 @@ def build_panel(
     elif base.age_seconds > config.stale_after_seconds:
         base.state = "stale"
         base.detail = f"Last reading {_humanize(base.age_seconds)} ago"
+        # An alarm flag attached to a stale reading describes the past, not
+        # the present: we do not know whether the probe is in alarm now. A red
+        # ALARM on a ten-day-old number reads as "act now", so staleness wins.
+        base.alarming = False
     else:
         base.state = "ok"
 

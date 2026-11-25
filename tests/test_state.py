@@ -301,3 +301,32 @@ def test_error_is_surfaced_without_destroying_last_known_readings():
     # The reading itself is still there to show.
     assert state["panels"][0]["value"] == pytest.approx(203.0)
     assert state["dataAgeSeconds"] == 90
+
+
+def test_stale_reading_does_not_report_an_alarm():
+    """An alarm flag on an old reading describes the past. Showing a red ALARM
+    on a ten-day-old number reads as 'act now' and is actively misleading."""
+    ch = channel(value=172.0, age_seconds=856279, alarming=True,
+                 alarm_high=Alarm(enabled=True, value=325.0, alarming=True))
+    panel = build_panel(
+        PanelConfig(name="Ambient", device="RFX GATEWAY", channel="1"),
+        snapshot([device(label="RFX GATEWAY", channels=[ch])]),
+        make_config(),
+        NOW,
+    )
+    assert panel.state == "stale"
+    assert panel.alarming is False
+    # The threshold is still shown, so the target remains visible.
+    assert panel.alarm_high == pytest.approx(325.0)
+
+
+def test_fresh_reading_still_reports_an_alarm():
+    ch = channel(value=210.0, age_seconds=30, alarming=True)
+    panel = build_panel(
+        PanelConfig(name="Meat", device="RFX MEAT 1", channel="1"),
+        snapshot([device(channels=[ch])]),
+        make_config(),
+        NOW,
+    )
+    assert panel.state == "ok"
+    assert panel.alarming is True
